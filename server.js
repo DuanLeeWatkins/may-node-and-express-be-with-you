@@ -12,13 +12,45 @@ MongoClient.connect(
     const db = client.db("star-wars-quotes");
     const quotesCollection = db.collection("quotes");
 
+    app.put("/quotes", (req, res) => {
+      quotesCollection
+        .findOneAndUpdate(
+          { name: "Yoda" },
+          {
+            $set: {
+              name: req.body.name,
+              quote: req.body.quote,
+            },
+          },
+          {
+            upsert: true,
+          }
+        )
+        .then((result) => {
+          console.log(result);
+        })
+        .catch((error) => console.error(error));
+    });
+
+    app.use(bodyParser.json());
+    app.use(express.static("public"));
+
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.set("view engine", "ejs");
 
     app.listen(3000, function () {
       console.log("listening on 3000");
     });
     app.get("/", (req, res) => {
-      res.sendFile(__dirname + "/index.html");
+      const cursor = db
+        .collection("quotes")
+        .find()
+        .toArray()
+        .then((results) => {
+          res.render("index.ejs", { quotes: results });
+        });
+      console.log(cursor);
+      //res.sendFile(__dirname + "/index.html");
     });
     app.post("/quotes", (req, res) => {
       quotesCollection
